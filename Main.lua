@@ -144,7 +144,7 @@ function PMProto.AddAction(Self,BasePart,CustomCommand)
 	print("Action on",BasePart.Name)
 
 	local Distance = (CurrentWaypoint.Path.Position - Self.OriginPart.Position).Magnitude
-	if Distance > Self.SafeDistance then
+	if Distance > Self.WaypointDistance * Self.CheckDistance then
 		Self:AddWaypoint(Self.OriginPart.Position,Enum.PathWaypointAction.Walk)
 	end
 
@@ -161,7 +161,7 @@ function PMProto.Start(Self)
 
 	if CurrentWaypoint then
 		local Distance = (CurrentWaypoint.Path.Position - Self.OriginPart.Position).Magnitude
-		if Distance < Self.SafeDistance then
+		if Distance < Self.WaypointDistance * Self.CheckDistance then
 			Self:RemoveWaypoint(CurrentWaypoint)
 			Self:AddWaypoint(CurrentWaypoint.Path.Position,Enum.PathWaypointAction.Walk,"Start",Color3.new(1,0,0))
 			return
@@ -180,7 +180,7 @@ function PMProto.Stop(Self)
 	if not CurrentWaypoint then return end
 	
 	local Distance = (CurrentWaypoint.Path.Position - Self.OriginPart.Position).Magnitude
-	if Distance < Self.SafeDistance then
+	if Distance < Self.WaypointDistance * Self.CheckDistance then
 		Self:RemoveWaypoint(CurrentWaypoint)
 		Self:AddWaypoint(CurrentWaypoint.Path.Position,Enum.PathWaypointAction.Walk,"Stop",Color3.new(0,1,0))
 		return
@@ -222,8 +222,8 @@ function PathMaker.new(OriginPart)
 	Self.AddingAction = false
 	Self.OriginPart = OriginPart
 
-	Self.PathDistance = 4
-	Self.SafeDistance = Self.PathDistance - Self.PathDistance / 4
+	Self.WaypointDistance = 4
+	Self.CheckDistance = 0.75
 	
 	Self.WaypointFolder = Instance.new("Folder")
 	Self.WaypointFolder.Name = "Waypoints"
@@ -241,7 +241,7 @@ function PathMaker.new(OriginPart)
 		end
 
 		local Distance = (CurrentWaypoint.Path.Position - Self.OriginPart.Position).Magnitude
-		if Distance < Self.PathDistance then return end
+		if Distance < Self.WaypointDistance then return end
 
 		Self:AddWaypoint(Self.OriginPart.Position,Enum.PathWaypointAction.Walk)
 	end)
