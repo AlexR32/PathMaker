@@ -95,11 +95,34 @@ function PMProto.RemoveWaypoint(Self,Waypoint)
 	return table.remove(Self.Waypoints,Waypoint)
 end
 
-function PMProto.FormatWaypoints(Self)
-	local String = "return {\n"
+function PMProto.GetWaypoints(Self)
+	local Waypoints = {}
 
 	for Index,Waypoint in pairs(Self.Waypoints) do
-		Waypoint = Waypoint.Path
+		table.insert(Waypoints,Waypoint.Path)
+	end
+
+	return Waypoints
+end
+
+function PMProto.GetClosest(Self,Distance)
+	local Waypoints = Self:GetWaypoints()
+	Distance = Distance or math.huge
+	local ClosestWaypoint = nil
+	
+	for Index,Waypoint in pairs(Waypoints) do
+		local Magnitude = (Waypoint.Position - Self.OriginPart.Position).Magnitude
+		if Magnitude <= Distance then Distance,ClosestWaypoint = Magnitude,Waypoint end
+	end
+
+	return ClosestWaypoint,Waypoints
+end
+
+function PMProto.FormatWaypoints(Self)
+	local Waypoints = Self:GetWaypoints()
+	local String = "return {\n"
+
+	for Index,Waypoint in pairs(Waypoints) do
 		local X = Pointer(Waypoint.Position.X)
 		local Y = Pointer(Waypoint.Position.Y)
 		local Z = Pointer(Waypoint.Position.Z)
@@ -113,7 +136,7 @@ function PMProto.FormatWaypoints(Self)
 		String ..= ("\t[%s] = %s,\n"):format(Index,WaypointForm:format(X,Y,Z,Action,Label))
 	end
 
-	return String .. "}"
+	return String .. "}",Waypoints
 end
 
 function PMProto.LoadWaypoints(Self,NewWaypoints)
