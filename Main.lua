@@ -117,10 +117,7 @@ function PMProto.FormatWaypoints(Self)
 end
 
 function PMProto.LoadWaypoints(Self,NewWaypoints)
-	if Self.Working then return end
-
-	Self.WaypointFolder:ClearAllChildren()
-	table.clear(Self.Waypoints)
+	Self:Clear()
 
 	for Index,Waypoint in pairs(NewWaypoints) do
 		local Command = string.split(Waypoint.Label,"/")
@@ -148,7 +145,7 @@ function PMProto.AddAction(Self,BasePart,CustomCommand)
 		Self:AddWaypoint(Self.OriginPart.Position,Enum.PathWaypointAction.Walk)
 	end
 
-	Self:AddWaypoint(BasePart.Position,Enum.PathWaypointAction.Custom,"Action/"..CustomCommand,Color3.new(0,0,1))
+	Self:AddWaypoint(BasePart.Position,Enum.PathWaypointAction.Custom,CustomCommand,Color3.new(0,0,1))
 	Self.AddingAction = false
 end
 
