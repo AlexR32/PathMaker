@@ -19,69 +19,99 @@ local function CheckOriginPart(Self)
 	end
 end
 
-function PMProto.MakeBeam(Self,Origin,Position,Color)
+--[[local function MakeBeam(Parent,Origin,Position,Color)
 	if not Origin or not Position then return end
 	if Position.Magnitude == 1 then Position += Origin end
-	local Cylinder = Instance.new("Part")
+	local Beam = Instance.new("Part")
 
-	Cylinder.Name = "Cylinder"
-	Cylinder.Anchored = true
-	Cylinder.CanTouch = false
-	Cylinder.CanQuery = false
-	Cylinder.CanCollide = false
+	Beam.Name = "Cylinder"
+	Beam.Anchored = true
+	Beam.CanTouch = false
+	Beam.CanQuery = false
+	Beam.CanCollide = false
 
-	Cylinder.BottomSurface = Enum.SurfaceType.Smooth
-	Cylinder.TopSurface = Enum.SurfaceType.Smooth
-	Cylinder.Material = Enum.Material.Neon
-	Cylinder.Shape = Enum.PartType.Cylinder
-	Cylinder.Color = Color3.new(1,0.5,0)
-	Cylinder.Transparency = 0.75
+	Beam.BottomSurface = Enum.SurfaceType.Smooth
+	Beam.TopSurface = Enum.SurfaceType.Smooth
+	Beam.Material = Enum.Material.Neon
+	Beam.Shape = Enum.PartType.Cylinder
+	Beam.Color = Color3.new(1,0.5,0)
+	Beam.Transparency = 0.75
 
-	Cylinder.Size = Vector3.new((Origin - Position).Magnitude,0.1,0.1)
+	Beam.Size = Vector3.new((Origin - Position).Magnitude,0.1,0.1)
 
-	Cylinder.CFrame = CFrame.new(Origin,Position)
-	Cylinder.CFrame *= CFrame.new(0,0,-Cylinder.Size.X / 2)
-	Cylinder.CFrame *= CFrame.Angles(0,math.rad(90),0)
+	Beam.CFrame = CFrame.new(Origin,Position)
+	Beam.CFrame *= CFrame.new(0,0,-Beam.Size.X / 2)
+	Beam.CFrame *= CFrame.Angles(0,math.rad(90),0)
 
-	Cylinder.Parent = Self.WaypointFolder
+	Beam.Parent = Parent
 
-	return Cylinder
+	return Beam
+end]]
+
+local function MakeBeam(StartWaypoint,EndWaypoint)
+	if not StartWaypoint then return end
+	if not EndWaypoint then return end
+
+	local StartPoint = StartWaypoint.Point
+	local EndPoint = EndWaypoint.Point
+	local Beam = Instance.new("Beam")
+
+	Beam.Name = "Beam"
+	Beam.Color = ColorSequence.new(StartPoint.Color,EndPoint.Color)
+	Beam.LightInfluence = 1
+	Beam.TextureMode = Enum.TextureMode.Static
+	Beam.TextureSpeed = 0
+
+	Beam.Attachment0 = StartPoint.BeamAttachment
+	Beam.Attachment1 = EndPoint.BeamAttachment
+	Beam.FaceCamera = true
+	Beam.Segments = 1
+	Beam.Width0 = 0.1
+	Beam.Width1 = 0.1
+
+	Beam.Parent = StartPoint
+
+	return Beam
 end
 
-function PMProto.MakePoint(Self,Position,Color)
+local function MakePoint(Parent,Position,Color)
 	if not Position then return end
-	local Ball = Instance.new("Part")
+	local Point = Instance.new("Part")
+	local BeamAttachment = Instance.new("Attachment")
 
-	Ball.Name = "Ball"
-	Ball.Anchored = true
-	Ball.CanTouch = false
-	Ball.CanQuery = false
-	Ball.CanCollide = false
+	Point.Name = "Point"
+	Point.Anchored = true
+	Point.CanTouch = false
+	Point.CanQuery = false
+	Point.CanCollide = false
 
-	Ball.BottomSurface = Enum.SurfaceType.Smooth
-	Ball.TopSurface = Enum.SurfaceType.Smooth
-	Ball.Material = Enum.Material.Neon
-	Ball.Shape = Enum.PartType.Ball
-	Ball.Color = Color or Color3.new(1,0.5,0)
-	Ball.Transparency = 0.5
+	Point.BottomSurface = Enum.SurfaceType.Smooth
+	Point.TopSurface = Enum.SurfaceType.Smooth
+	Point.Material = Enum.Material.Neon
+	Point.Shape = Enum.PartType.Ball
+	Point.Transparency = 0.5
+	Point.Color = Color or Color3.new(1,0.5,0)
 
-	Ball.Size = Vector3.new(0.5,0.5,0.5)
-	Ball.CFrame = CFrame.new(Position)
+	Point.Size = Vector3.new(0.5,0.5,0.5)
+	Point.CFrame = CFrame.new(Position)
+	
+	BeamAttachment.Name = "BeamAttachment"
+	BeamAttachment.Parent = Point
 
-	Ball.Parent = Self.WaypointFolder
+	Point.Parent = Parent
 
-	return Ball
+	return Point
 end
 
 function PMProto.AddWaypoint(Self,Position,Action,Label,Color)
-	local PreviousWaypoint = Self.Waypoints[#Self.Waypoints] and Self.Waypoints[#Self.Waypoints].Path
-	local PreviousWaypointPosition = PreviousWaypoint and PreviousWaypoint.Position
+	local PreviousWaypoint = Self.Waypoints[#Self.Waypoints]
+	
+	local Waypoint = {}
+	Waypoint.Path = PathWaypoint.new(Position,Action,Label)
 
-	local Waypoint = {
-		Path = PathWaypoint.new(Position,Action,Label),
-		Beam = Self:MakeBeam(PreviousWaypointPosition,Position,Color),
-		Point = Self:MakePoint(Position,Color)
-	}
+	Waypoint.Point = MakePoint(Self.WaypointsFolder,Position,Color)
+	Waypoint.Beam = MakeBeam(PreviousWaypoint,Waypoint)
+
 
 	table.insert(Self.Waypoints,Waypoint)
 	return Waypoint
@@ -220,7 +250,7 @@ function PMProto.Clear(Self)
 		Self:Stop()
 	end
 
-	Self.WaypointFolder:ClearAllChildren()
+	Self.WaypointsFolder:ClearAllChildren()
 	table.clear(Self.Waypoints)
 end
 
@@ -229,7 +259,7 @@ function PMProto.Destroy(Self)
 		Self:Stop()
 	end
 
-	Self.WaypointFolder:Destroy()
+	Self.WaypointsFolder:Destroy()
 	Self.Connection:Disconnect()
 	table.clear(Self.Waypoints)
 end
@@ -245,9 +275,9 @@ function PathMaker.new(OriginPart)
 	Self.WaypointDistance = 4
 	Self.CheckDistance = 0.75
 	
-	Self.WaypointFolder = Instance.new("Folder")
-	Self.WaypointFolder.Name = "Waypoints"
-	Self.WaypointFolder.Parent = Workspace
+	Self.WaypointsFolder = Instance.new("Folder")
+	Self.WaypointsFolder.Name = "Waypoints"
+	Self.WaypointsFolder.Parent = Workspace
 
 	Self.Connection = RunService.Heartbeat:Connect(function()
 		if not Self.Working or Self.AddingAction then return end
