@@ -24,7 +24,7 @@ end
 	if Position.Magnitude == 1 then Position += Origin end
 	local Beam = Instance.new("Part")
 
-	Beam.Name = "Cylinder"
+	Beam.Name = "Beam"
 	Beam.Anchored = true
 	Beam.CanTouch = false
 	Beam.CanQuery = false
@@ -58,9 +58,11 @@ local function MakeBeam(StartWaypoint,EndWaypoint)
 
 	Beam.Name = "Beam"
 	Beam.Color = ColorSequence.new(StartPoint.Color,EndPoint.Color)
+	Beam.LightEmission = 1
 	Beam.LightInfluence = 1
 	Beam.TextureMode = Enum.TextureMode.Static
 	Beam.TextureSpeed = 0
+	Beam.Transparency = NumberSequence.new(0)
 
 	Beam.Attachment0 = StartPoint.BeamAttachment
 	Beam.Attachment1 = EndPoint.BeamAttachment
@@ -89,7 +91,7 @@ local function MakePoint(Parent,Position,Color)
 	Point.TopSurface = Enum.SurfaceType.Smooth
 	Point.Material = Enum.Material.Neon
 	Point.Shape = Enum.PartType.Ball
-	Point.Transparency = 0.5
+	Point.Transparency = 0
 	Point.Color = Color or Color3.new(1,0.5,0)
 
 	Point.Size = Vector3.new(0.5,0.5,0.5)
@@ -181,7 +183,7 @@ function PMProto.LoadWaypoints(Self,NewWaypoints)
 	end
 end
 
-function PMProto.AddAction(Self,BasePart,CustomCommand)
+function PMProto.AddAction(Self,BasePart,Action)
 	if not Self.Working then return end
 
 	Self.AddingAction = true
@@ -191,14 +193,15 @@ function PMProto.AddAction(Self,BasePart,CustomCommand)
 	if not CurrentWaypoint then return end
 
 	if not BasePart then return end
-	print("Action on",BasePart.Name)
+	--print("Action on",BasePart.Name)
+	Action = Action and "Action/" .. Action or "Action"
 
 	local Distance = (CurrentWaypoint.Path.Position - Self.OriginPart.Position).Magnitude
 	if Distance > Self.WaypointDistance * Self.CheckDistance then
 		Self:AddWaypoint(Self.OriginPart.Position,Enum.PathWaypointAction.Walk)
 	end
 
-	Self:AddWaypoint(BasePart.Position,Enum.PathWaypointAction.Custom,CustomCommand,Color3.new(0,0,1))
+	Self:AddWaypoint(BasePart.Position,Enum.PathWaypointAction.Custom,Action,Color3.new(0,0,1))
 	Self.AddingAction = false
 end
 
